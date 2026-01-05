@@ -448,7 +448,7 @@
 
     <div class="card">
 
-        <h2>📦 รับออเดอร์ กุยช่ายบ้านบึง<br>ต้นตำรับ</h2>
+        <h2>📦 กุยช่ายบ้านบึง<br>ต้นตำรับ</h2>
 
         <div class="delivery-date">
             <span id="deliveryStatus" style="display:none; color:#ef4444; font-weight:700;">⛔ ปิดรับออเดอร์แล้ว</span>
@@ -728,41 +728,44 @@
             // Create order summary for display
             let orderSummary = '<div style="text-align: left; margin-top: 10px;">';
             orderItems.forEach(item => {
-                orderSummary += `<div style="padding: 5px 0; border-bottom: 1px dashed #e0e0e0;">
-                    <strong>${item.menu}</strong> × ${item.qty} กล่อง
+                orderSummary += `<div style="padding: 3px 0; border-bottom: 1px dashed #e0e0e0; font-size: 14px;">
+                    <strong>${item.menu}</strong> × ${item.qty}
                 </div>`;
             });
-            orderSummary += `<div style="padding: 10px 0; font-size: 16px; font-weight: 600; color: #667eea;">
-                รวมทั้งหมด: ${totalBoxes} กล่อง<br>
-                <span style="font-size: 18px; color: #0c4a6e;">ยอดชำระ: ${totalPrice} บาท</span>
+            orderSummary += `<div style="padding: 5px 0; font-size: 15px; font-weight: 600; color: #667eea;">
+                รวมทั้งหมด: ${totalBoxes} กล่อง | <span style="font-size: 16px; color: #0c4a6e;">ยอดชำระ: ${totalPrice} บาท</span>
             </div></div>`;
 
             // Confirm Dialog
             const result = await Swal.fire({
                 icon: 'question',
                 title: 'ยืนยันออเดอร์',
+                customClass: { popup: 'compact-popup' },
                 html: `
-                    <div style="text-align: center; font-family: 'Prompt', sans-serif;">
-                        <p style="margin: 10px 0;"><strong>ผู้สั่ง:</strong> ${payload.customer_name}</p>
-                        <p style="margin: 10px 0;"><strong>หน่วยงาน:</strong> ${payload.department}</p>
-                        <p style="margin: 10px 0; color: #0369a1;"><strong>📅 รอบส่ง:</strong> ${document.getElementById('deliveryDate').innerText}</p>
+                    <style>
+                        .compact-popup .swal2-icon { transform: scale(0.6); margin: 0.5em auto !important; }
+                        .compact-popup .swal2-title { padding: 0 !important; font-size: 1.25em !important; }
+                        .compact-popup .swal2-html-container { margin: 0.5em !important; }
+                    </style>
+                    <div style="text-align: center; font-family: 'Prompt', sans-serif; font-size: 14px; margin-bottom: 5px;">
+                        <p style="margin: 2px 0;"><strong>คุณ ${payload.customer_name}</strong></p>
+                        <p style="margin: 2px 0; color: #0369a1;"><strong>📅 รอบส่ง:</strong> ${document.getElementById('deliveryDate').innerText}</p>
                     </div>
                     ${orderSummary}
                 `,
                 footer: `
-                    <div style="text-align: center; margin-top: 10px;">
-                        <p style="margin: 0; color: #1e40af; font-weight: 600;">PromptPay สำหรับชำระเงิน</p>
-                        <img src="https://promptpay.io/0819382245/${totalPrice}.png" alt="QR Code" style="width: 200px; margin: 10px auto; display: block; border-radius: 8px; border: 1px solid #e0e0e0;">
-                        <p style="margin: 0; color: #64748b; font-size: 14px;">081-938-2245</p>
-                        <p style="margin: 0; color: #64748b; font-size: 14px;">อรพร ศิริพงศ์วัฒนา</p>
-                        <p style="margin: 5px 0 0 0; color: #397054; font-size: 13px; font-weight:600;">*ขอบคุณคะ*</p> 
+                    <div style="text-align: center; margin-top: 5px;">
+                        <p style="margin: 0; color: #1e40af; font-weight: 600; font-size: 14px;">PromptPay สำหรับชำระเงิน</p>
+                        <img src="https://promptpay.io/0819382245/${totalPrice}.png" alt="QR Code" style="width: 150px; margin: 5px auto; display: block; border-radius: 8px; border: 1px solid #e0e0e0;">
+                        <p style="margin: 0; color: #64748b; font-size: 13px;">081-938-2245 (อรพร ศิริพงศ์วัฒนา)</p>
+                        <p style="margin: 2px 0 0 0; color: #397054; font-size: 12px; font-weight:600;">*ขอบคุณคะ*</p> 
                     </div>
                 `,
                 showCancelButton: true,
                 confirmButtonText: 'ยืนยันรายการ',
                 cancelButtonText: 'แก้ไข',
                 confirmButtonColor: '#10b981',
-                width: '500px'
+                width: '400px'
             });
 
             if (result.isConfirmed) {
