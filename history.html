@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ประวัติการขาย - กุยช่ายบ้านบึง</title>
+
+    <!-- Fonts: Local Prompt -->
+    <style>
+        @font-face {
+            font-family: 'Prompt';
+            src: url('fonts/Prompt-Light.ttf') format('truetype');
+            font-weight: 300;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Prompt';
+            src: url('fonts/Prompt-Regular.ttf') format('truetype');
+            font-weight: 400;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Prompt';
+            src: url('fonts/Prompt-Medium.ttf') format('truetype');
+            font-weight: 500;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Prompt';
+            src: url('fonts/Prompt-SemiBold.ttf') format('truetype');
+            font-weight: 600;
+            font-style: normal;
+        }
+
+        @font-face {
+            font-family: 'Prompt';
+            src: url('fonts/Prompt-Bold.ttf') format('truetype');
+            font-weight: 700;
+            font-style: normal;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <!-- Supabase SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Config -->
+    <script src="config.js"></script>
+
+    <style>
+        :root {
+            --primary: #4f46e5;
+            --primary-dark: #4338ca;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --gray-100: #f3f4f6;
+            --gray-200: #e5e7eb;
+            --gray-500: #6b7280;
+            --gray-800: #1f2937;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Prompt', sans-serif;
+            background: #f8fafc;
+            color: var(--gray-800);
+            margin: 0;
+            padding: 0;
+            padding-bottom: 80px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            padding: 16px;
+        }
+
+        /* ===== Header ===== */
+        .header {
+            background: white;
+            padding: 16px;
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 18px;
+            color: var(--primary-dark);
+        }
+
+        .btn-back {
+            background: var(--gray-200);
+            color: var(--gray-800);
+            border: none;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* ===== Controls ===== */
+        .controls {
+            margin-bottom: 16px;
+        }
+
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--gray-200);
+            border-radius: 12px;
+            font-family: 'Prompt';
+            font-size: 16px;
+            background: white;
+        }
+
+        /* ===== Section Cards ===== */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--gray-100);
+        }
+
+        .card-title {
+            font-size: 16px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ===== Menu Summary ===== */
+        .menu-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .menu-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            font-size: 15px;
+        }
+
+        .menu-qty {
+            font-weight: 700;
+            color: var(--primary);
+            font-size: 18px;
+        }
+
+        .menu-total-row {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 2px dashed var(--gray-200);
+            display: flex;
+            justify-content: space-between;
+            font-weight: 700;
+        }
+
+        /* ===== Order List ===== */
+        .order-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        .order-card {
+            background: var(--gray-100);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .customer-name {
+            font-weight: 600;
+        }
+
+        .order-time {
+            font-size: 12px;
+            color: var(--gray-500);
+        }
+
+        .order-items-text {
+            font-size: 14px;
+            color: var(--gray-500);
+            margin-bottom: 8px;
+        }
+
+        .order-status {
+            font-size: 12px;
+            display: flex;
+            gap: 10px;
+        }
+
+        .status-tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: #e2e8f0;
+            color: #4b5563;
+        }
+
+        .status-tag.paid {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-tag.delivered {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        /* ===== Financial ===== */
+        .fin-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-size: 14px;
+        }
+
+        .profit-row {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid var(--gray-200);
+            font-weight: 700;
+            color: var(--success);
+            font-size: 18px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>📜 ประวัติการขาย</h1>
+            <a href="preoderadmin.html" class="btn-back"><i class="fas fa-arrow-left"></i> กลับ</a>
+        </div>
+
+        <!-- Round Selector -->
+        <div class="controls">
+            <select id="roundSelect" onchange="loadRoundData(this.value)">
+                <option value="">กำลังโหลดรายชื่อรอบ...</option>
+            </select>
+        </div>
+
+        <div id="contentArea" style="display:none;">
+            <!-- 1. Financial -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-wallet"></i> สรุปเงิน
+                    </div>
+                </div>
+                <div class="fin-row">
+                    <span>ยอดขาย (รับ)</span>
+                    <span id="totalRevenue">0 ฿</span>
+                </div>
+                <div class="fin-row" style="color:var(--danger)">
+                    <span>ต้นทุน (จ่าย)</span>
+                    <span id="totalCost">0 ฿</span>
+                </div>
+                <div class="fin-row profit-row">
+                    <span>กำไร</span>
+                    <span id="totalProfit">0 ฿</span>
+                </div>
+            </div>
+
+            <!-- 2. Menu Summary -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-clipboard-list"></i> สรุปรายการสินค้า
+                    </div>
+                </div>
+                <ul class="menu-list" id="menuSummaryList">
+                    <!-- Items -->
+                </ul>
+                <div class="menu-total-row" id="menuTotalRow">
+                    <span>รวมทั้งหมด</span>
+                    <span id="totalBoxCount">0 กล่อง</span>
+                </div>
+            </div>
+
+            <!-- 3. Order List -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">
+                        <i class="fas fa-users"></i> รายการออเดอร์
+                        <span id="orderCountBadge"
+                            style="background:var(--gray-200); padding:2px 8px; border-radius:12px; font-size:12px;">0</span>
+                    </div>
+                </div>
+                <!-- Search Box -->
+                <div style="margin-bottom: 12px;">
+                    <input type="text" id="orderSearch" placeholder="🔍 ค้นหาชื่อ หรือ หน่วยงาน..."
+                        onkeyup="renderOrderList()"
+                        style="width:100%; padding:10px; border:1px solid #e5e7eb; border-radius:8px; font-family:'Prompt';">
+                </div>
+                <div id="orderListContainer">
+                    <!-- Orders -->
+                </div>
+            </div>
+        </div>
+
+        <div id="noData" style="text-align: center; color: #6b7280; margin-top: 50px;">
+            กรุณาเลือกรอบส่งที่ต้องการดูข้อมูล
+        </div>
+    </div>
+
+    <script>
+        const supabaseClient = initSupabase();
+        let orders = [];
+        let orderItems = [];
+
+        async function init() {
+            if (!supabaseClient) return;
+
+            // Fetch all rounds
+            const { data: rounds, error } = await supabaseClient
+                .from('rounds')
+                .select('*')
+                .order('delivery_date', { ascending: false });
+
+            const select = document.getElementById('roundSelect');
+            select.innerHTML = '<option value="">-- เลือกรอบส่ง --</option>';
+
+            if (rounds && rounds.length > 0) {
+                rounds.forEach(round => {
+                    const date = new Date(round.delivery_date);
+                    const dateStr = date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+                    const statusText = round.status === 'OPEN' ? '(เปิดอยู่)' : '(ปิดแล้ว)';
+                    const option = document.createElement('option');
+                    option.value = round.id;
+                    option.text = `${dateStr} ${statusText}`;
+                    select.appendChild(option);
+                });
+            } else {
+                select.innerHTML = '<option value="">ไม่พบประวัติการขาย</option>';
+            }
+        }
+
+        async function loadRoundData(roundId) {
+            if (!roundId) {
+                document.getElementById('contentArea').style.display = 'none';
+                document.getElementById('noData').style.display = 'block';
+                return;
+            }
+
+            // Show Loading
+            Swal.fire({
+                title: 'กำลังโหลด...',
+                allowOutsideClick: false,
+                didOpen: () => Swal.showLoading()
+            });
+
+            try {
+                // Get Orders
+                const { data: ordersData } = await supabaseClient
+                    .from('orders')
+                    .select('*')
+                    .eq('round_id', roundId)
+                    .order('created_at', { ascending: false });
+
+                orders = ordersData || [];
+
+                // Get Items
+                const orderIds = orders.map(o => o.id);
+                if (orderIds.length > 0) {
+                    const { data: itemsData } = await supabaseClient
+                        .from('order_items')
+                        .select('*')
+                        .in('order_id', orderIds);
+                    orderItems = itemsData || [];
+                } else {
+                    orderItems = [];
+                }
+
+                renderAll();
+
+                document.getElementById('contentArea').style.display = 'block';
+                document.getElementById('noData').style.display = 'none';
+                Swal.close();
+
+            } catch (err) {
+                console.error(err);
+                Swal.fire('Error', 'โหลดข้อมูลไม่สำเร็จ', 'error');
+            }
+        }
+
+        function renderAll() {
+            document.getElementById('orderCountBadge').innerText = orders.length;
+            renderMenuSummary();
+            renderOrderList();
+            renderFinancial();
+        }
+
+        function renderMenuSummary() {
+            const summary = {};
+            let totalBoxes = 0;
+
+            orderItems.forEach(item => {
+                summary[item.menu_name] = (summary[item.menu_name] || 0) + item.quantity;
+                totalBoxes += item.quantity;
+            });
+
+            const list = document.getElementById('menuSummaryList');
+            list.innerHTML = '';
+
+            if (Object.keys(summary).length === 0) {
+                list.innerHTML = '<li style="text-align:center; color:#9ca3af;">ไม่มีรายการ</li>';
+                return;
+            }
+
+            for (const [name, qty] of Object.entries(summary)) {
+                list.innerHTML += `
+                    <li class="menu-item">
+                        <span>${name}</span>
+                        <span class="menu-qty">x${qty}</span>
+                    </li>
+                `;
+            }
+            document.getElementById('totalBoxCount').innerText = `${totalBoxes} กล่อง`;
+        }
+
+        function renderOrderList() {
+            const container = document.getElementById('orderListContainer');
+            const searchText = document.getElementById('orderSearch').value.toLowerCase();
+            container.innerHTML = '';
+
+            orders.forEach(order => {
+                const searchStr = (order.customer_name + ' ' + order.department).toLowerCase();
+                if (!searchStr.includes(searchText)) return;
+
+                const myItems = orderItems.filter(i => i.order_id === order.id);
+                const itemText = myItems.map(i => `${i.menu_name} x${i.quantity}`).join(', ');
+                const isPaid = order.payment_status === 'paid';
+                const isDelivered = order.delivery_status === 'delivered';
+
+                container.innerHTML += `
+                    <div class="order-card">
+                        <div class="order-header">
+                            <span class="customer-name">${order.customer_name} (${order.department})</span>
+                            <span class="order-time">${new Date(order.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                        <div class="order-items-text">${itemText}</div>
+                        <div class="order-status">
+                            <span class="status-tag ${isPaid ? 'paid' : ''}">${isPaid ? 'จ่ายแล้ว' : 'รอจ่าย'}</span>
+                            <span class="status-tag ${isDelivered ? 'delivered' : ''}">${isDelivered ? 'ส่งแล้ว' : 'รอส่ง'}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function renderFinancial() {
+            let revenue = 0;
+            let cost = 0;
+
+            orderItems.forEach(item => {
+                revenue += item.sell_price || 0;
+                cost += item.cost_price || 0;
+            });
+
+            const profit = revenue - cost;
+
+            document.getElementById('totalRevenue').innerText = revenue.toLocaleString() + ' ฿';
+            document.getElementById('totalCost').innerText = cost.toLocaleString() + ' ฿';
+            document.getElementById('totalProfit').innerText = profit.toLocaleString() + ' ฿';
+        }
+
+        // Start
+        init();
+    </script>
+</body>
+
+</html>
