@@ -353,7 +353,6 @@
         async function init() {
             if (!supabaseClient) return;
 
-            // Fetch all rounds
             const { data: rounds, error } = await supabaseClient
                 .from('rounds')
                 .select('*')
@@ -384,7 +383,6 @@
                 return;
             }
 
-            // Show Loading
             Swal.fire({
                 title: 'กำลังโหลด...',
                 allowOutsideClick: false,
@@ -392,7 +390,6 @@
             });
 
             try {
-                // Get Orders
                 const { data: ordersData } = await supabaseClient
                     .from('orders')
                     .select('*')
@@ -401,7 +398,6 @@
 
                 orders = ordersData || [];
 
-                // Get Items
                 const orderIds = orders.map(o => o.id);
                 if (orderIds.length > 0) {
                     const { data: itemsData } = await supabaseClient
@@ -494,8 +490,13 @@
             let revenue = 0;
             let cost = 0;
 
+            // ✅ รายรับ: รวมจาก orders.total_price (ที่มีโปรโมชั่นแล้ว)
+            orders.forEach(order => {
+                revenue += order.total_price || 0;
+            });
+
+            // ✅ ต้นทุน: รวมจาก order_items.cost_price
             orderItems.forEach(item => {
-                revenue += item.sell_price || 0;
                 cost += item.cost_price || 0;
             });
 
@@ -506,7 +507,6 @@
             document.getElementById('totalProfit').innerText = profit.toLocaleString() + ' ฿';
         }
 
-        // Start
         init();
     </script>
 </body>
