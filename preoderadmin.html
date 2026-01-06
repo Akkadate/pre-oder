@@ -261,10 +261,49 @@
         .profit-row {
             margin-top: 8px;
             padding-top: 8px;
-            border-top: 1px solid var(--gray-200);
+            border-top: 1px solid #e5e7eb;
             font-weight: 700;
-            color: var(--success);
+            color: #10b981;
             font-size: 18px;
+        }
+
+        /* ===== Table View Styles ===== */
+        .order-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .order-table th,
+        .order-table td {
+            padding: 10px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        .order-table th {
+            background: #f3f4f6;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .order-table tr:hover {
+            background: #f9fafb;
+        }
+
+        .view-toggle-btn {
+            padding: 8px 12px;
+            border: 1px solid #e5e7eb;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .view-toggle-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
         }
 
         /* ===== Close Button ===== */
@@ -341,11 +380,18 @@
                 </div>
             </div>
 
-            <!-- Search Box -->
-            <div style="margin-bottom: 12px;">
+            <!-- Search & View Toggle -->
+            <div style="margin-bottom: 12px; display:flex; gap:10px;">
                 <input type="text" id="orderSearch" placeholder="🔍 ค้นหาชื่อ หรือ หน่วยงาน..."
                     onkeyup="renderOrderList()"
-                    style="width:100%; padding:10px; border:1px solid #e5e7eb; border-radius:8px; font-family:'Prompt';">
+                    style="flex:1; padding:10px; border:1px solid #e5e7eb; border-radius:8px; font-family:'Prompt';">
+
+                <button class="view-toggle-btn active" id="btnViewList" onclick="switchView('list')">
+                    <i class="fas fa-list"></i>
+                </button>
+                <button class="view-toggle-btn" id="btnViewTable" onclick="switchView('table')">
+                    <i class="fas fa-table"></i>
+                </button>
             </div>
 
             <div id="orderListContainer">
@@ -393,6 +439,14 @@
         let currentRound = null;
         let orders = [];
         let orderItems = [];
+        let currentView = 'list'; // 'list' or 'table'
+
+        function switchView(view) {
+            currentView = view;
+            document.getElementById('btnViewList').className = view === 'list' ? 'view-toggle-btn active' : 'view-toggle-btn';
+            document.getElementById('btnViewTable').className = view === 'table' ? 'view-toggle-btn active' : 'view-toggle-btn';
+            renderOrderList();
+        }
 
         // Main function to load everything
         async function loadData() {
@@ -521,43 +575,87 @@
             const searchText = document.getElementById('orderSearch').value.toLowerCase();
             container.innerHTML = '';
 
-            let shownCount = 0;
-
-            orders.forEach(order => {
-                // Filter logic
+            let filteredOrders = orders.filter(order => {
                 const searchStr = (order.customer_name + ' ' + order.department).toLowerCase();
-                if (!searchStr.includes(searchText)) {
-                    return;
-                }
-                shownCount++;
-
-                // Find items for this order
-                const myItems = orderItems.filter(i => i.order_id === order.id);
-                const itemText = myItems.map(i => `${i.menu_name} x${i.quantity}`).join(', ');
-
-                const isPaid = order.payment_status === 'paid';
-                const isDelivered = order.delivery_status === 'delivered';
-
-                container.innerHTML += `
-                    <div class="order-card">
-                        <div class="order-header">
-                            <span class="customer-name">${order.customer_name} (${order.department})</span>
-                            <span class="order-time">${new Date(order.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                        <div class="order-items-text">
-                            ${itemText}
-                        </div>
-                        <div class="order-actions">
-                            <button class="action-btn btn-paid ${isPaid ? 'active' : ''}" onclick="toggleStatus('${order.id}', 'payment_status', '${isPaid ? 'pending' : 'paid'}')">
-                                <i class="fas fa-money-bill"></i> ${isPaid ? 'จ่ายแล้ว' : 'รอจ่าย'}
-                            </button>
-                            <button class="action-btn btn-delivered ${isDelivered ? 'active' : ''}" onclick="toggleStatus('${order.id}', 'delivery_status', '${isDelivered ? 'pending' : 'delivered'}')">
-                                <i class="fas fa-box"></i> ${isDelivered ? 'ส่งแล้ว' : 'รอส่ง'}
-                            </button>
-                        </div>
-                    </div>
-                `;
+                return searchStr.includes(searchText);
             });
+
+            if (currentView === 'table') {
+                // TABLE VIEW
+                let tableHtml = `
+                    <div style="overflow-x:auto;">
+                    <table class="order-table">
+                        <thead>
+                            <tr>
+                                <th>ชื่อ</th>
+                                <th>รายการ</th>
+                                <th>ราคา</th>
+                                <th>สถานะ</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                filteredOrders.forEach(order => {
+                    const myItems = orderItems.filter(i => i.order_id === order.id);
+                    const itemText = myItems.map(i => `${i.menu_name} x${i.quantity}`).join('<br>'); // Use BR for table
+                    const isPaid = order.payment_status === 'paid';
+                    const isDelivered = order.delivery_status === 'delivered';
+
+                    tableHtml += `
+                        <tr>
+                            <td>
+                                <strong>${order.customer_name}</strong><br>
+                                <span style="font-size:12px; color:#6b7280;">${order.department}</span>
+                            </td>
+                            <td>${itemText}</td>
+                            <td>${order.total_price}฿</td>
+                            <td>
+                                <div style="display:flex; gap:5px; flex-direction:column;">
+                                    <button class="action-btn btn-paid ${isPaid ? 'active' : ''}" style="padding:4px; font-size:12px;" onclick="toggleStatus('${order.id}', 'payment_status', '${isPaid ? 'pending' : 'paid'}')">
+                                        ${isPaid ? '💰 จ่ายแล้ว' : 'รอจ่าย'}
+                                    </button>
+                                    <button class="action-btn btn-delivered ${isDelivered ? 'active' : ''}" style="padding:4px; font-size:12px;" onclick="toggleStatus('${order.id}', 'delivery_status', '${isDelivered ? 'pending' : 'delivered'}')">
+                                        ${isDelivered ? '📦 ส่งแล้ว' : 'รอส่ง'}
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                });
+
+                tableHtml += '</tbody></table></div>';
+                container.innerHTML = tableHtml;
+
+            } else {
+                // LIST VIEW (Original)
+                filteredOrders.forEach(order => {
+                    const myItems = orderItems.filter(i => i.order_id === order.id);
+                    const itemText = myItems.map(i => `${i.menu_name} x${i.quantity}`).join(', ');
+                    const isPaid = order.payment_status === 'paid';
+                    const isDelivered = order.delivery_status === 'delivered';
+
+                    container.innerHTML += `
+                        <div class="order-card">
+                            <div class="order-header">
+                                <span class="customer-name">${order.customer_name} (${order.department})</span>
+                                <span class="order-time">${new Date(order.created_at).toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                            <div class="order-items-text">
+                                ${itemText}
+                            </div>
+                            <div class="order-actions">
+                                <button class="action-btn btn-paid ${isPaid ? 'active' : ''}" onclick="toggleStatus('${order.id}', 'payment_status', '${isPaid ? 'pending' : 'paid'}')">
+                                    <i class="fas fa-money-bill"></i> ${isPaid ? 'จ่ายแล้ว' : 'รอจ่าย'}
+                                </button>
+                                <button class="action-btn btn-delivered ${isDelivered ? 'active' : ''}" onclick="toggleStatus('${order.id}', 'delivery_status', '${isDelivered ? 'pending' : 'delivered'}')">
+                                    <i class="fas fa-box"></i> ${isDelivered ? 'ส่งแล้ว' : 'รอส่ง'}
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
         }
 
         function renderFinancial() {

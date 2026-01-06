@@ -332,8 +332,8 @@
             list-style: none;
             padding: 0;
             margin: 6px 0 0 0;
-            max-height: 150px;
-            overflow-y: auto;
+            /* max-height: 150px; Remove scrollbar */
+            /* overflow-y: auto; */
         }
 
         .summary li {
@@ -446,9 +446,22 @@
 
 <body>
 
+    <!-- Full Page Thank You (Hidden by default) -->
+    <div id="thankYouOverlay"
+        style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:white; z-index:9999; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding: 20px;">
+        <img src="images/thank_you.png"
+            style="width:280px; max-width:80%; border-radius: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <h2 style="margin-top:24px; color:#4caf50; font-size: 24px;">บันทึกสำเร็จ!</h2>
+        <p style="font-size:18px; color:#4b5563; margin: 8px 0;">ขอบคุณที่อุดหนุนคะ</p>
+
+        <!-- QRCode Section (Populated via JS) -->
+        <div id="paymentArea" style="margin-top:20px; text-align:center;"></div>
+
+    </div>
+
     <div class="card">
 
-        <h2>📦 กุยช่ายบ้านบึง<br>ต้นตำรับ</h2>
+        <h2>📦 กุยช่ายบ้านบึง ต้นตำรับ</h2>
 
         <div class="delivery-date">
             <span id="deliveryStatus" style="display:none; color:#ef4444; font-weight:700;">⛔ ปิดรับออเดอร์แล้ว</span>
@@ -511,7 +524,7 @@
         </div>
 
         <!-- เพิ่ม -->
-        <button class="btn-add" onclick="addItem()">+ สั่งเพิ่ม</button>
+        <button class="btn-add" onclick="addItem()">+ ตกลง</button>
 
         <!-- Summary -->
         <div id="summarySection" class="section" style="display:none;">
@@ -521,7 +534,7 @@
             </div>
 
             <button class="btn-confirm" onclick="confirmOrder()">
-                ✓ ยืนยันออเดอร์ทั้งหมด
+                ✓ ส่งคำสั่งซื้อ
             </button>
         </div>
 
@@ -736,115 +749,79 @@
                 รวมทั้งหมด: ${totalBoxes} กล่อง | <span style="font-size: 16px; color: #0c4a6e;">ยอดชำระ: ${totalPrice} บาท</span>
             </div></div>`;
 
-            // Confirm Dialog
-            const result = await Swal.fire({
-                icon: 'question',
-                title: 'ยืนยันออเดอร์',
-                customClass: { popup: 'compact-popup' },
-                html: `
-                    <style>
-                        .compact-popup .swal2-icon { transform: scale(0.6); margin: 0.5em auto !important; }
-                        .compact-popup .swal2-title { padding: 0 !important; font-size: 1.25em !important; }
-                        .compact-popup .swal2-html-container { margin: 0.5em !important; }
-                    </style>
-                    <div style="text-align: center; font-family: 'Prompt', sans-serif; font-size: 14px; margin-bottom: 5px;">
-                        <p style="margin: 2px 0;"><strong>คุณ ${payload.customer_name}</strong></p>
-                        <p style="margin: 2px 0; color: #0369a1;"><strong>📅 รอบส่ง:</strong> ${document.getElementById('deliveryDate').innerText}</p>
-                    </div>
-                    ${orderSummary}
-                `,
-                footer: `
-                    <div style="text-align: center; margin-top: 5px;">
-                        <p style="margin: 0; color: #1e40af; font-weight: 600; font-size: 14px;">PromptPay สำหรับชำระเงิน</p>
-                        <img src="https://promptpay.io/0819382245/${totalPrice}.png" alt="QR Code" style="width: 150px; margin: 5px auto; display: block; border-radius: 8px; border: 1px solid #e0e0e0;">
-                        <p style="margin: 0; color: #64748b; font-size: 13px;">081-938-2245 (อรพร ศิริพงศ์วัฒนา)</p>
-                        <p style="margin: 2px 0 0 0; color: #397054; font-size: 12px; font-weight:600;">*ขอบคุณคะ*</p> 
-                    </div>
-                `,
-                showCancelButton: true,
-                confirmButtonText: 'ยืนยันรายการ',
-                cancelButtonText: 'แก้ไข',
-                confirmButtonColor: '#10b981',
-                width: '400px'
+            // Direct Submit (No Confirmation)
+
+            // Show loading
+            Swal.fire({
+                title: 'กำลังบันทึกข้อมูล...',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
             });
 
-            if (result.isConfirmed) {
-                // Show loading
-                Swal.fire({
-                    title: 'กำลังบันทึกข้อมูล...',
-                    allowOutsideClick: false,
-                    didOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
+            try {
+                if (supabaseClient) {
+                    // 1. Insert Order
+                    const { data: order, error: orderError } = await supabaseClient
+                        .from('orders')
+                        .insert({
+                            round_id: currentRound.id,
+                            customer_name: payload.customer_name,
+                            department: payload.department,
+                            total_boxes: totalBoxes,
+                            total_price: totalPrice
+                        })
+                        .select()
+                        .single();
 
-                try {
-                    if (supabaseClient) {
-                        // 1. Insert Order
-                        const { data: order, error: orderError } = await supabaseClient
-                            .from('orders')
-                            .insert({
-                                round_id: currentRound.id,
-                                customer_name: payload.customer_name,
-                                department: payload.department,
-                                total_boxes: totalBoxes,
-                                total_price: totalPrice
-                            })
-                            .select()
-                            .single();
+                    if (orderError) throw orderError;
 
-                        if (orderError) throw orderError;
+                    // 2. Insert Items
+                    const itemsToInsert = orderItems.map(item => ({
+                        order_id: order.id,
+                        menu_name: item.menu,
+                        quantity: item.qty,
+                        sell_price: 35 * item.qty,
+                        cost_price: calculateCostPrice(item.qty)
+                    }));
 
-                        // 2. Insert Items
-                        const itemsToInsert = orderItems.map(item => ({
-                            order_id: order.id,
-                            menu_name: item.menu,
-                            quantity: item.qty,
-                            sell_price: calculatePrice(item.qty), // Note: This might need per-item logic if we tracked unit price, but for total logic we store proportional or just ref.
-                            // Let's store unit price * qty for simplicity in DB, but actually we calculate total at end.
-                            // To be accurate with "3 for 100", storing per-item price is tricky. 
-                            // For profit calculation, let's just store 35 * qty as sell_price mock, 
-                            // OR better: distribute total price weighted by quantity.
-                            // For simplicity: Store standard price (35) per item for now, 
-                            // but reliance should be on order.total_price.
-                            // Update: Let's use standard unit price for items -> 35 * qty
-                            sell_price: 35 * item.qty,
-                            cost_price: calculateCostPrice(item.qty)
-                        }));
+                    const { error: itemsError } = await supabaseClient
+                        .from('order_items')
+                        .insert(itemsToInsert);
 
-                        // Fix: The previous logic uses total price. 
-                        // If we want financial summary to match total price, we should probably distribute the discount or just use order.total_price for revenue.
-                        // For Order Items table, let's just store the quantity.
-                        // We will rely on Orders table for Total Revenue.
-
-                        const { error: itemsError } = await supabaseClient
-                            .from('order_items')
-                            .insert(itemsToInsert);
-
-                        if (itemsError) throw itemsError;
-                    }
-
-                    // Success
-                    Swal.fire({
-                        icon: 'success',
-                        title: 'บันทึกสำเร็จ! 🎉',
-                        text: 'ขอบคุณที่ใช้บริการคะ',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
-
-                    // Reset
-                    orderItems = [];
-                    renderSummary();
-
-                } catch (err) {
-                    console.error(err);
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'เกิดข้อผิดพลาด',
-                        text: 'ไม่สามารถบันทึกออเดอร์ได้ กรุณาลองใหม่'
-                    });
+                    if (itemsError) throw itemsError;
                 }
+
+                // Success
+                Swal.close(); // Close loading
+
+                // Populate Payment Info in Overlay
+                const paymentHtml = `
+                    <div style="background:#f8fafc; padding:15px; border-radius:12px; border:1px dashed #cbd5e1; max-width:300px; margin:0 auto;">
+                        <p style="margin: 0; color: #1e40af; font-weight: 600; font-size: 14px;">PromptPay สำหรับชำระเงิน</p>
+                        <img src="https://promptpay.io/0819382245/${totalPrice}.png" alt="QR Code" style="width: 150px; margin: 10px auto; display: block; border-radius: 8px; border: 1px solid #e0e0e0;">
+                        <p style="margin: 0; color: #64748b; font-size: 13px;">ยอดชำระ: <strong style="color:#0369a1; font-size:16px;">${totalPrice} บาท</strong></p>
+                        <p style="margin: 5px 0 0 0; color: #64748b; font-size: 12px;">081-938-2245 (อรพร ศิริพงศ์วัฒนา)</p>
+                    </div>
+                `;
+                document.getElementById('paymentArea').innerHTML = paymentHtml;
+
+                // Show Overlay
+                document.getElementById('thankYouOverlay').style.display = 'flex';
+                document.querySelector('.card').style.display = 'none'; // Hide form
+
+                // Reset
+                orderItems = [];
+                renderSummary();
+
+            } catch (err) {
+                console.error(err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'เกิดข้อผิดพลาด',
+                    text: 'ไม่สามารถบันทึกออเดอร์ได้ กรุณาลองใหม่'
+                });
             }
         }
     </script>

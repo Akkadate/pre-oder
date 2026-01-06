@@ -33,4 +33,7 @@
 - [x] Build order management interface
 - [x] Add Search Filter for orders
 - [x] Add order analytics/reports (Basic financial summary)
-- [ ] Test and deploy
+- [x] Create History Page for past rounds
+- [x] Implement Full-Page Thank You Screen
+- [x] Configure for LINE Browser (Native Close)
+- [x] Test and deploy
